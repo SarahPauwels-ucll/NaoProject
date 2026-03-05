@@ -3,6 +3,8 @@
     <Manifest src="manifest.xml" />
     <BehaviorDescriptions>
         <BehaviorDescription name="behavior" src="success_feedback" xar="behavior.xar" />
+        <BehaviorDescription name="behavior" src="failure_feedback" xar="behavior.xar" />
+        <BehaviorDescription name="behavior" src="timeout_feedback" xar="behavior.xar" />
     </BehaviorDescriptions>
     <Dialogs />
     <Resources />
