@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<package installOnlyAtStartup="false" version="0.0.0" uuid="feedback-835d81">
+<package uuid="feedback-835d81" installOnlyAtStartup="false" version="0.0.0">
  <names>
   <name lang="en_US">Untitled</name>
  </names>
@@ -12,12 +12,10 @@
  <contents>
   <behaviorContent path="success_feedback">
    <nature>interactive</nature>
-   <autonomous/>
    <permissions/>
   </behaviorContent>
   <behaviorContent path="failure_feedback">
    <nature>interactive</nature>
-   <autonomous/>
    <permissions/>
   </behaviorContent>
   <behaviorContent path="timeout_feedback">

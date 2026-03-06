@@ -35,14 +35,19 @@
             <comment>Text</comment>
             <translation type="vanished">Hello</translation>
         </message>
+        <message>
+            <location filename="success_feedback/behavior.xar" line="0"/>
+            <source>Andrew</source>
+            <comment>Text</comment>
+            <translation type="unfinished">Andrew</translation>
+        </message>
     </context>
     <context>
         <name>success_feedback/behavior.xar:/success/Celebrate/Celebrate/Say</name>
         <message>
-            <location filename="success_feedback/behavior.xar" line="0"/>
             <source>That's right!</source>
             <comment>Text</comment>
-            <translation type="unfinished">That's right!</translation>
+            <translation type="obsolete">That's right!</translation>
         </message>
     </context>
     <context>
