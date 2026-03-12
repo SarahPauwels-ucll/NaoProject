@@ -12,13 +12,20 @@
  <contents>
   <behaviorContent path="success_feedback">
    <nature>interactive</nature>
+   <autonomous/>
    <permissions/>
   </behaviorContent>
   <behaviorContent path="failure_feedback">
    <nature>interactive</nature>
+   <autonomous/>
    <permissions/>
   </behaviorContent>
   <behaviorContent path="timeout_feedback">
+   <nature>interactive</nature>
+   <autonomous/>
+   <permissions/>
+  </behaviorContent>
+  <behaviorContent path="ask_question">
    <nature>interactive</nature>
    <permissions/>
   </behaviorContent>
