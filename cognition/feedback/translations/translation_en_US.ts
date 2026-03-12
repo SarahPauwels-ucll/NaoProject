@@ -9,10 +9,9 @@
             <translation type="vanished">Hello</translation>
         </message>
         <message>
-            <location filename="failure_feedback/behavior.xar" line="0"/>
             <source>Oh no! That's not right.</source>
             <comment>Text</comment>
-            <translation type="unfinished">Oh no! That's not right.</translation>
+            <translation type="obsolete">Oh no! That's not right.</translation>
         </message>
     </context>
     <context>
@@ -36,10 +35,9 @@
             <translation type="vanished">Hello</translation>
         </message>
         <message>
-            <location filename="success_feedback/behavior.xar" line="0"/>
             <source>Andrew</source>
             <comment>Text</comment>
-            <translation type="unfinished">Andrew</translation>
+            <translation type="obsolete">Andrew</translation>
         </message>
     </context>
     <context>
@@ -79,10 +77,9 @@
             <translation type="vanished">Hello</translation>
         </message>
         <message>
-            <location filename="timeout_feedback/behavior.xar" line="0"/>
             <source>Oh! You ran out of time.</source>
             <comment>Text</comment>
-            <translation type="unfinished">Oh! You ran out of time.</translation>
+            <translation type="obsolete">Oh! You ran out of time.</translation>
         </message>
     </context>
 </TS>
