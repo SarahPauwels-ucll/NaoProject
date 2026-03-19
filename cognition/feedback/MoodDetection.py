@@ -9,6 +9,7 @@ class MoodDetector:
 
         self.memory = memory
         self.memory_subscriber = None
+        self.got_face = False
 
     def start(self):
         self.memory_subscriber = self.memory.subscribe("FaceDetected")
@@ -19,7 +20,11 @@ class MoodDetector:
             self.memory_subscriber.signal.disconnect(self.on_face_detected)
 
     def on_face_detected(self, value):
-        print value
+
+        if value == []:
+            self.got_face = False
+        elif not self.got_face:
+            self.got_face = True
 
 
 if __name__ == "__main__":
