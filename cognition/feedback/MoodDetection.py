@@ -19,7 +19,7 @@ class MoodDetector:
             self.memory_subscriber.signal.disconnect(self.on_face_detected)
 
     def on_face_detected(self, value):
-        pass
+        print value
 
 
 if __name__ == "__main__":
