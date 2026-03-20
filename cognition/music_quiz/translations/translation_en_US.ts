@@ -9,10 +9,9 @@
             <translation type="vanished">Hello</translation>
         </message>
         <message>
-            <location filename="music_quiz/behavior.xar" line="0"/>
             <source>Time is almost up</source>
             <comment>Text</comment>
-            <translation type="unfinished">Time is almost up</translation>
+            <translation type="obsolete">Time is almost up</translation>
         </message>
     </context>
 </TS>
