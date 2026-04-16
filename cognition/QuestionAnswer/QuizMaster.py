@@ -141,7 +141,7 @@ class QuizMaster(object):
         self.game_state == STATE_AWAIT_ANSWER
         self.logger.verbose("State changed to {}".format(self.game_state))
 
-    def evaluate_answer(self)
+    def evaluate_answer(self):
 
         # TODO: Get answer from somewhere and check against
         pass
