@@ -51,8 +51,6 @@ class QuizMaster(object):
         #self.talk_service.post.say("Yo!")
         self.playlist_manager = PlaylistManager.PlaylistManager(self.app, MUSIC_DIR)
         self.playlist_manager.initialisePlaylist()
-        #title, artist = self.playlist_manager.playTrack()
-
 
         # self.listen_subscriber = session.service("ALSpeechRecognition")
 
@@ -73,7 +71,85 @@ class QuizMaster(object):
     def on_word_recognised(self, value):
 
         if self.game_state == STATE_IDLE and value[0] == "start game":
-            self.logger.info(type(value[0]))
+            # self.logger.info(type(value[0]))
+            start_game()
+
+        #elif self.game_state == STATE_START_GAME:
+        #    raise NotImplementedError()
+
+        elif self.game_state == STATE_CONTINUE:
+            raise NotImplementedError()
+
+        elif self.game_state == STATE_PLAY_TRACK:
+            raise NotImplementedError()
+
+        #elif self.game_state == STATE_ASK_QUESTION:
+        #    raise NotImplementedError()
+
+        elif self.game_state == STATE_AWAIT_ANSWER:
+            raise NotImplementedError()
+
+        elif self.game_state == STATE_EVALUATE_ANSWER:
+
+            evaluate_answer()
+
+        #elif self.game_state == STATE_FEEDBACK_SUCCESS:
+        #    raise NotImplementedError()
+
+        #elif self.game_state == STATE_FEEDBACK_FAILURE:
+        #    raise NotImplementedError()
+
+        ##elif self.game_state == STATE_FEEDBACK_ENCOURAGEMENT:
+        ##    raise NotImplementedError()
+
+        ##elif self.game_state == STATE_FEEDBACK_TIMEOUT:
+        ##    raise NotImplementedError()
+
+    def start_game(self):
+
+        self.game_state = STATE_CONTINUE
+        self.logger.verbose("State changed to {}".format(self.game_state))
+
+        continue_round()
+
+    def continue_round(self):
+
+        self.game_state = STATE_CONTINUE
+        self.logger.verbose("State changed to {}".format(self.game_state))
+
+    def play_track(self):
+
+        # TODO: Capture these in game state
+        title, artist = self.playlist_manager.playTrack()
+
+        self.game_state = STATE_ASK_QUESTION
+        self.logger.verbose("State changed to {}".format(self.game_state))
+
+        ask_question()
+
+    def ask_question(self):
+
+        # TODO: Start timer
+        self.game_state == STATE_AWAIT_ANSWER
+        self.logger.verbose("State changed to {}".format(self.game_state))
+
+    def evaluate_answer(self)
+
+        # TODO: Get answer from somewhere and check against
+        pass
+
+    def give_feedback(self):
+
+        # TODO: Requires a working timer
+        #self.game_state = STATE_FEEDBACK_ENCOURAGEMENT
+        #self.game_state = STATE_FEEDBACK_TIMEOUT
+
+        if False:
+            self.game_state = STATE_FEEDBACK_SUCCESS
+        else:
+            self.game_state = STATE_FEEDBACK_FAILURE
+
+        self.logger.verbose("State changed to {}".format(self.game_state))
 
 if __name__ == "__main__":
 
