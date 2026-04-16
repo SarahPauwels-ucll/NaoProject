@@ -11,6 +11,7 @@ proxies = [
     "ALLogger",
 ]
 
+STATE_IDLE = "STATE_IDLE"
 STATE_START_GAME = "STATE_START_GAME"
 STATE_CONTINUE = "STATE_CONTINUE"
 STATE_PLAY_TRACK = "STATE_PLAY_TRACK",
@@ -41,19 +42,25 @@ class QuizMaster(object):
 
         self.logger = qi.Logger("QuizMaster")
 
+        self.game_state = STATE_IDLE
+
     def start(self):
 
-        self.logger.info("Here!")
+        self.logger.info("QuizMaster Starting")
 
         #self.talk_service.post.say("Yo!")
         self.playlist_manager = PlaylistManager.PlaylistManager(self.app, MUSIC_DIR)
         self.playlist_manager.initialisePlaylist()
-        title, artist = self.playlist_manager.playTrack()
+        #title, artist = self.playlist_manager.playTrack()
 
 
         # self.listen_subscriber = session.service("ALSpeechRecognition")
-        #self.memory = self.app.service("ALMemory")
+
         #self.memory_subscriber.signal.connect(self.on_face_detected)
+        self.memory_subscriber = self.memory_service.subscriber("WordRecognized")
+        self.memory_subscriber.signal.connect(self.on_word_recognised)
+
+        self.logger.info("QuizMaster subscriptions completed")
 
     def stop(self):
         #if self.memory_subscriber:
@@ -61,7 +68,12 @@ class QuizMaster(object):
 
         #self.talk_service.stop()
         self.talk_service = None
-        raise RuntimeError()
+        #raise RuntimeError()
+
+    def on_word_recognised(self, value):
+
+        if value != []:
+            self.logger.info((value))
 
 if __name__ == "__main__":
 
@@ -79,7 +91,7 @@ if __name__ == "__main__":
         quiz_master = QuizMaster(app, talk, listen, remember)
         quiz_master.start()
 
-        #app.run()
+        app.run()
 
 
     except RuntimeError as ex:
