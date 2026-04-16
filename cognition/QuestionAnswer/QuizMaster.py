@@ -72,8 +72,8 @@ class QuizMaster(object):
 
     def on_word_recognised(self, value):
 
-        if value != []:
-            self.logger.info((value))
+        if self.game_state == STATE_IDLE and value[0] == "start game":
+            self.logger.info(type(value[0]))
 
 if __name__ == "__main__":
 
