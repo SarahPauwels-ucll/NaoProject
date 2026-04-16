@@ -1,4 +1,5 @@
 import qi
+import random
 import PlaylistManager
 
 ROBOT_IP = "127.0.0.1"
@@ -129,7 +130,14 @@ class QuizMaster(object):
 
     def ask_question(self):
 
+        question = random.randint(0, 1)
+        if question == 0:
+            self.talk_service.say("What's the name of this tune?")
+        else:
+            self.talk_service.say("Who sang this tune?")
+
         # TODO: Start timer
+
         self.game_state == STATE_AWAIT_ANSWER
         self.logger.verbose("State changed to {}".format(self.game_state))
 
