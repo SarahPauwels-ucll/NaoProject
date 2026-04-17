@@ -3,10 +3,10 @@ import random
 import threading
 import PlaylistManager
 
-#ROBOT_IP = "127.0.0.1"
-#ROBOT_PORT = "55409"
-ROBOT_IP = "172.18.16.47"
-ROBOT_PORT = "9559"
+ROBOT_IP = "127.0.0.1"
+ROBOT_PORT = "64286"
+#ROBOT_IP = "172.18.16.47"
+#ROBOT_PORT = "9559"
 
 proxies = [
     "ALTextToSpeech",
@@ -213,7 +213,12 @@ if __name__ == "__main__":
     import qi
 
     try:
-        app = qi.Application()
+        connection_string = "--qi-url=tcp://"+ROBOT_IP+":"+ROBOT_PORT
+
+        app = qi.Application([
+            "QuizMaster",
+            connection_string,
+        ])
         app.start()
 
         talk = app.session.service(proxies[0])
