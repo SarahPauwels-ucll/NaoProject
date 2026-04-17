@@ -20,7 +20,7 @@ class TrackData:
 
 class PlaylistManager:
 
-    def __init__(self, app, music_directory=None):
+    def __init__(self, app, music_directory):
 
         self.app = app
         self.logger = qi.Logger("PlaylistManager")
@@ -37,6 +37,7 @@ class PlaylistManager:
         self.logger.info("Initialising playlist")
 
         self.player = self.app.session.service(proxies[0])
+        #self.player.playFile("/home/nao/music/down_under__men_at_work.ogg")
 
         self.logger.info("Playlist location: {}".format(self.music_directory))
 
@@ -44,7 +45,7 @@ class PlaylistManager:
             self.logger.error("Music directory not initialised")
             raise ValueError("Music directory not initialised")
         if not os.path.exists(self.music_directory):
-            self.logger.error("Music directory does not exist")
+            self.logger.error("Music directory does not exist: {}".format(self.music_directory))
             raise ValueError("Music directory does not exist")
         if not os.path.isdir(self.music_directory):
             self.logger.error("Music directory is not a directory")

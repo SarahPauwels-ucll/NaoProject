@@ -3,8 +3,10 @@ import random
 import threading
 import PlaylistManager
 
-ROBOT_IP = "127.0.0.1"
-ROBOT_PORT = "55409"
+#ROBOT_IP = "127.0.0.1"
+#ROBOT_PORT = "55409"
+ROBOT_IP = "172.18.16.47"
+ROBOT_PORT = "9559"
 
 proxies = [
     "ALTextToSpeech",
@@ -57,13 +59,13 @@ class QuizMaster(object):
         self.playlist_manager = PlaylistManager.PlaylistManager(self.app, MUSIC_DIR)
         self.playlist_manager.initialisePlaylist()
 
-        isSrAvailable = True
-        try:
-            self.listen = app.session.service("ALSpeechRecognition")
-            self.listen.pause(True)
-        except:
-            self.logger.error("Failed to get a handle to ALSpeechRecognition, defaulting to Virtual Robot Test Mode")
-            isSrAvailable = False
+        # isSrAvailable = True
+        # try:
+        #     self.listen = app.session.service("ALSpeechRecognition")
+        #     self.listen.pause(True)
+        # except:
+        #     self.logger.error("Failed to get a handle to ALSpeechRecognition, defaulting to Virtual Robot Test Mode")
+        #     isSrAvailable = False
 
         #self.memory_subscriber.signal.connect(self.on_face_detected)
         self.memory_subscriber = self.memory_service.subscriber("WordRecognized")
@@ -71,9 +73,9 @@ class QuizMaster(object):
 
         self.logger.info("QuizMaster subscriptions completed")
 
-        if isSrAvailable:
-            self.listen.setVocabulary(["start game", "start quiz"], False)
-            self.listen.pause(False)
+        #if isSrAvailable:
+        #    self.listen.setVocabulary(["start game", "start quiz"], False)
+        #    self.listen.pause(False)
 
     def stop(self):
         #if self.memory_subscriber:
