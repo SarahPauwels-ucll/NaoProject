@@ -1,5 +1,6 @@
 import qi
 import random
+import threading
 import PlaylistManager
 
 ROBOT_IP = "127.0.0.1"
@@ -45,6 +46,9 @@ class QuizMaster(object):
 
         self.game_state = STATE_IDLE
 
+        self.answer_timer = None
+        self.feedback_lock = threading.Lock()
+
     def start(self):
 
         self.logger.info("QuizMaster Starting")
@@ -73,7 +77,7 @@ class QuizMaster(object):
 
         if self.game_state == STATE_IDLE and value[0] == "start game":
             # self.logger.info(type(value[0]))
-            start_game()
+            self.start_game()
 
         #elif self.game_state == STATE_START_GAME:
         #    raise NotImplementedError()
@@ -92,7 +96,7 @@ class QuizMaster(object):
 
         elif self.game_state == STATE_EVALUATE_ANSWER:
 
-            evaluate_answer()
+            self.evaluate_answer()
 
         #elif self.game_state == STATE_FEEDBACK_SUCCESS:
         #    raise NotImplementedError()
@@ -111,7 +115,7 @@ class QuizMaster(object):
         self.game_state = STATE_CONTINUE
         self.logger.verbose("State changed to {}".format(self.game_state))
 
-        continue_round()
+        self.continue_round()
 
     def continue_round(self):
 
@@ -126,7 +130,7 @@ class QuizMaster(object):
         self.game_state = STATE_ASK_QUESTION
         self.logger.verbose("State changed to {}".format(self.game_state))
 
-        ask_question()
+        self.ask_question()
 
     def ask_question(self):
 
@@ -136,28 +140,46 @@ class QuizMaster(object):
         else:
             self.talk_service.say("Who sang this tune?")
 
-        # TODO: Start timer
+        self.answer_timer = threading.Timer(10.0, self.give_feedback())
 
         self.game_state == STATE_AWAIT_ANSWER
         self.logger.verbose("State changed to {}".format(self.game_state))
 
     def evaluate_answer(self):
 
+        self.answer_timer.cancel()
+
         # TODO: Get answer from somewhere and check against
         pass
 
     def give_feedback(self):
 
-        # TODO: Requires a working timer
-        #self.game_state = STATE_FEEDBACK_ENCOURAGEMENT
-        #self.game_state = STATE_FEEDBACK_TIMEOUT
+        self.logger.verbose("Try acquire Mutex")
+        self.feedback_lock.acquire(True)
+        self.logger.verbose("Mutex acquired")
 
-        if False:
-            self.game_state = STATE_FEEDBACK_SUCCESS
-        else:
-            self.game_state = STATE_FEEDBACK_FAILURE
+        try:
+            # TODO: Requires a working timer
+            if self.game_state == STATE_AWAIT_ANSWER:
 
-        self.logger.verbose("State changed to {}".format(self.game_state))
+                self.talk_service.say("Time's almost up?")
+                self.answer_timer.cancel()
+                self.answer_timer = threading.Timer(5.0, self.evaluate_answer())
+            #self.game_state = STATE_FEEDBACK_ENCOURAGEMENT
+            #self.game_state = STATE_FEEDBACK_TIMEOUT
+
+            if False:
+                self.game_state = STATE_FEEDBACK_SUCCESS
+            else:
+                self.game_state = STATE_FEEDBACK_FAILURE
+
+            self.logger.verbose("State changed to {}".format(self.game_state))
+        except:
+            self.logger.fatal("Hopefully we never get here!")
+        finally:
+            self.feedback_lock.release()
+            self.logger.verbose("Mutex released")
+
 
 if __name__ == "__main__":
 
