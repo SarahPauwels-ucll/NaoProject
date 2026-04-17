@@ -14,7 +14,7 @@ class TrackData:
         tmp = file.split("__")
 
         self.title = tmp[0].replace("_", " ")
-        self.artist = tmp[1].replace("_", " ").replace(".ogg", " ")
+        self.artist = tmp[1].replace("_", " ").replace(".ogg", "")
 
         self.filepath = filepath
 
