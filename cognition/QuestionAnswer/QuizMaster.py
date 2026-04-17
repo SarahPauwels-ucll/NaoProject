@@ -53,6 +53,8 @@ class QuizMaster(object):
         self.answer_timer = None
         self.feedback_lock = threading.Lock()
 
+        self.current_answer = None
+
     def start(self):
 
         self.logger.info("QuizMaster Starting")
@@ -118,11 +120,12 @@ class QuizMaster(object):
         #    raise NotImplementedError()
 
         elif self.game_state == STATE_AWAIT_ANSWER:
-            raise NotImplementedError()
 
-        elif self.game_state == STATE_EVALUATE_ANSWER:
+            self.evaluate_answer(value[0])
 
-            self.evaluate_answer()
+        #elif self.game_state == STATE_EVALUATE_ANSWER:
+
+
 
         #elif self.game_state == STATE_FEEDBACK_SUCCESS:
         #    raise NotImplementedError()
@@ -146,16 +149,24 @@ class QuizMaster(object):
 
         self.change_current_state(STATE_CONTINUE)
 
-        self.play_track()
+        self.current_answer = None
+        question = self.ask_question()
+        self.play_track(question)
 
-    def play_track(self):
+    def play_track(self, question):
 
         # TODO: Capture these in game state
         title, artist = self.playlist_manager.playTrack()
+        if question == 0:
+            self.current_answer = title
+        else:
+            self.current_answer = artist
+        self.logger.info(self.current_answer)
 
-        self.change_current_state(STATE_ASK_QUESTION)
+        self.change_current_state(STATE_AWAIT_ANSWER)
 
-        self.ask_question()
+        self.answer_timer = threading.Timer(10.0, self.give_encouragement)
+        self.answer_timer.start()
 
     def ask_question(self):
 
@@ -165,29 +176,39 @@ class QuizMaster(object):
         else:
             self.talk_service.say("Who sang this tune?")
 
-        self.answer_timer = threading.Timer(10.0, self.give_feedback)
-        self.answer_timer.start()
+        self.change_current_state(STATE_ASK_QUESTION)
 
-        self.change_current_state(STATE_AWAIT_ANSWER)
+        return question
 
-    def evaluate_answer(self):
+    def answer_timeout(self):
 
         with self.feedback_lock:
 
             self.answer_timer.cancel()
 
-            #TODO: This isn't quite right, but will do for now
-            if self.game_state == STATE_FEEDBACK_ENCOURAGEMENT:
+            self.talk_service.say("Oh no, time's up?")
+            self.change_current_state(STATE_FEEDBACK_TIMEOUT)
+            self.talk_service.say("The answer was ".format(self.current_answer))
 
-                self.talk_service.say("Oh no, time's up?")
-                self.change_current_state(STATE_FEEDBACK_TIMEOUT)
+    def evaluate_answer(self, current_guess):
 
-            else:
-                # TODO: This is incomplete
-                # TODO: Get answer from somewhere and check against
+        with self.feedback_lock:
+
+            self.answer_timer.cancel()
+
+            # TODO: This is incomplete
+            # TODO: Get answer from somewhere and check against
+
+            self.logger.info(current_guess)
+
+            if self.current_answer == current_guess:
                 self.change_current_state(STATE_FEEDBACK_SUCCESS)
+            else:
+                self.change_current_state(STATE_FEEDBACK_FAILURE)
 
-    def give_feedback(self):
+            self.give_feedback()
+
+    def give_encouragement(self):
 
         self.logger.verbose("Try acquire Mutex")
         with self.feedback_lock:
@@ -199,7 +220,7 @@ class QuizMaster(object):
 
                     self.talk_service.say("Time's almost up?")
                     self.answer_timer.cancel()
-                    self.answer_timer = threading.Timer(5.0, self.evaluate_answer)
+                    self.answer_timer = threading.Timer(5.0, self.answer_timeout)
                     self.answer_timer.start()
 
             except:
@@ -207,6 +228,14 @@ class QuizMaster(object):
 
         self.logger.verbose("Mutex released")
 
+    def give_feedback(self):
+
+        if self.game_state == STATE_FEEDBACK_SUCCESS:
+            self.talk_service.say("Well done, that's right!")
+        else:
+            self.talk_service.say("Better luck next time!")
+
+        self.continue_round()
 
 if __name__ == "__main__":
 
