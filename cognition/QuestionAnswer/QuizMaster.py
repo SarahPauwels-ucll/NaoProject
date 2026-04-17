@@ -1,3 +1,4 @@
+import sys
 import qi
 import random
 import threading
@@ -208,9 +209,6 @@ class QuizMaster(object):
 
 
 if __name__ == "__main__":
-
-    import sys
-    import qi
 
     try:
         connection_string = "--qi-url=tcp://"+ROBOT_IP+":"+ROBOT_PORT
