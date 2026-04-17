@@ -37,7 +37,7 @@ class QuizMaster(object):
         self.playlist_manager = None
 
         self.talk_service = talk
-        self.listen_service = listen
+        self.listen = listen
 
         self.memory_service = remember
         self.memory_subscriber = None
@@ -54,17 +54,26 @@ class QuizMaster(object):
 
         self.logger.info("QuizMaster Starting")
 
-        #self.talk_service.post.say("Yo!")
         self.playlist_manager = PlaylistManager.PlaylistManager(self.app, MUSIC_DIR)
         self.playlist_manager.initialisePlaylist()
 
-        # self.listen_subscriber = session.service("ALSpeechRecognition")
+        isSrAvailable = True
+        try:
+            self.listen = app.session.service("ALSpeechRecognition")
+            self.listen.pause(True)
+        except:
+            self.logger.error("Failed to get a handle to ALSpeechRecognition, defaulting to Virtual Robot Test Mode")
+            isSrAvailable = False
 
         #self.memory_subscriber.signal.connect(self.on_face_detected)
         self.memory_subscriber = self.memory_service.subscriber("WordRecognized")
         self.memory_subscriber.signal.connect(self.on_word_recognised)
 
         self.logger.info("QuizMaster subscriptions completed")
+
+        if isSrAvailable:
+            self.listen.setVocabulary(["start game", "start quiz"], False)
+            self.listen.pause(False)
 
     def stop(self):
         #if self.memory_subscriber:
@@ -90,7 +99,7 @@ class QuizMaster(object):
         self.logger.info("Hit Word Recognised Callback")
 
         if self.game_state == STATE_IDLE and value[0] == "start game":
-            # self.logger.info(type(value[0]))
+
             self.start_game()
 
         #elif self.game_state == STATE_START_GAME:
