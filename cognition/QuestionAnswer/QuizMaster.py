@@ -51,9 +51,12 @@ class QuizMaster(object):
         self.state_lock = threading.Lock()
 
         self.answer_timer = None
-        self.feedback_lock = threading.Lock()
+        #self.feedback_lock = threading.Lock()
 
         self.current_answer = None
+        self.questions_asked = 0
+        self.answered_right = 0
+        self.questions_per_round = 5
 
     def start(self):
 
@@ -143,13 +146,20 @@ class QuizMaster(object):
 
         self.change_current_state(STATE_CONTINUE)
 
+        self.questions_asked = 0
+        self.answered_right = 0
+
         self.continue_round()
 
     def continue_round(self):
 
-        self.change_current_state(STATE_CONTINUE)
+        if self.questions_asked == self.questions_per_round:
+            self.talk_service.say("Round complete, you scored {} out of {}".format(self.answered_right, self.questions_per_round))
+            sys.exit(0)
 
+        self.change_current_state(STATE_CONTINUE)
         self.current_answer = None
+        self.talk_service.say("Next question")
         question = self.ask_question()
         self.play_track(question)
 
@@ -176,60 +186,67 @@ class QuizMaster(object):
         else:
             self.talk_service.say("Who sang this tune?")
 
+        self.questions_asked += 1
+
         self.change_current_state(STATE_ASK_QUESTION)
 
         return question
 
     def answer_timeout(self):
 
-        with self.feedback_lock:
+        self.answer_timer.cancel()
 
-            self.answer_timer.cancel()
+        self.talk_service.say("Oh no, time's up?")
 
-            self.talk_service.say("Oh no, time's up?")
-            self.change_current_state(STATE_FEEDBACK_TIMEOUT)
-            self.talk_service.say("The answer was ".format(self.current_answer))
+        #with self.feedback_lock:
+        self.change_current_state(STATE_FEEDBACK_TIMEOUT)
+        #self.talk_service.say("The answer was {}".format(self.current_answer))
+
+        # TODO: There's a thread issue round here I'm sure
+        #self.continue_round()
 
     def evaluate_answer(self, current_guess):
 
-        with self.feedback_lock:
+        self.answer_timer.cancel()
 
-            self.answer_timer.cancel()
+        # TODO: This is incomplete
+        # TODO: Get answer from somewhere and check against
 
-            # TODO: This is incomplete
-            # TODO: Get answer from somewhere and check against
+        self.logger.info(current_guess)
 
-            self.logger.info(current_guess)
+        if self.current_answer == current_guess:
+            #with self.feedback_lock:
+            self.change_current_state(STATE_FEEDBACK_SUCCESS)
+            self.answered_right += 1
+        else:
 
-            if self.current_answer == current_guess:
-                self.change_current_state(STATE_FEEDBACK_SUCCESS)
-            else:
-                self.change_current_state(STATE_FEEDBACK_FAILURE)
+            self.change_current_state(STATE_FEEDBACK_FAILURE)
 
-            self.give_feedback()
+        self.give_feedback()
 
     def give_encouragement(self):
 
-        self.logger.verbose("Try acquire Mutex")
-        with self.feedback_lock:
-            self.logger.verbose("Mutex acquired")
+        #self.logger.verbose("Try acquire Mutex")
+        #with self.feedback_lock:
+        #    self.logger.verbose("Mutex acquired")
 
-            try:
-                if self.game_state == STATE_AWAIT_ANSWER:
-                    self.change_current_state(STATE_FEEDBACK_ENCOURAGEMENT)
+        try:
+            if self.game_state == STATE_AWAIT_ANSWER:
+                self.change_current_state(STATE_FEEDBACK_ENCOURAGEMENT)
 
-                    self.talk_service.say("Time's almost up?")
-                    self.answer_timer.cancel()
-                    self.answer_timer = threading.Timer(5.0, self.answer_timeout)
-                    self.answer_timer.start()
+                self.talk_service.say("Time's almost up?")
+                self.answer_timer.cancel()
+                self.answer_timer = threading.Timer(5.0, self.answer_timeout)
+                self.answer_timer.start()
 
-            except:
-                self.logger.fatal("Hopefully we never get here!")
+        except:
+            self.logger.fatal("Hopefully we never get here!")
 
-        self.logger.verbose("Mutex released")
+        #self.logger.verbose("Mutex released")
 
     def give_feedback(self):
 
+        #with self.feedback_lock:
         if self.game_state == STATE_FEEDBACK_SUCCESS:
             self.talk_service.say("Well done, that's right!")
         else:
