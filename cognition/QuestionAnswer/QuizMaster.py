@@ -45,6 +45,7 @@ class QuizMaster(object):
         self.logger = qi.Logger("QuizMaster")
 
         self.game_state = STATE_IDLE
+        self.state_lock = threading.Lock()
 
         self.answer_timer = None
         self.feedback_lock = threading.Lock()
@@ -72,6 +73,17 @@ class QuizMaster(object):
         #self.talk_service.stop()
         self.talk_service = None
         #raise RuntimeError()
+
+    def change_current_state(self, to_state):
+
+        self.logger.verbose("Try acquire state change mutex")
+
+        with self.state_lock:
+            self.logger.verbose("Acquired state change mutex")
+            self.game_state = to_state
+            self.logger.verbose("State changed to {}".format(self.game_state))
+
+        self.logger.verbose("Released state change mutex")
 
     def on_word_recognised(self, value):
 
@@ -114,15 +126,13 @@ class QuizMaster(object):
 
     def start_game(self):
 
-        self.game_state = STATE_CONTINUE
-        self.logger.verbose("State changed to {}".format(self.game_state))
+        self.change_current_state(STATE_CONTINUE)
 
         self.continue_round()
 
     def continue_round(self):
 
-        self.game_state = STATE_CONTINUE
-        self.logger.verbose("State changed to {}".format(self.game_state))
+        self.change_current_state(STATE_CONTINUE)
 
         self.play_track()
 
@@ -131,8 +141,7 @@ class QuizMaster(object):
         # TODO: Capture these in game state
         title, artist = self.playlist_manager.playTrack()
 
-        self.game_state = STATE_ASK_QUESTION
-        self.logger.verbose("State changed to {}".format(self.game_state))
+        self.change_current_state(STATE_ASK_QUESTION)
 
         self.ask_question()
 
@@ -147,8 +156,7 @@ class QuizMaster(object):
         self.answer_timer = threading.Timer(10.0, self.give_feedback)
         self.answer_timer.start()
 
-        self.game_state = STATE_AWAIT_ANSWER
-        self.logger.verbose("State changed to {}".format(self.game_state))
+        self.change_current_state(STATE_AWAIT_ANSWER)
 
     def evaluate_answer(self):
 
@@ -160,16 +168,12 @@ class QuizMaster(object):
             if self.game_state == STATE_FEEDBACK_ENCOURAGEMENT:
 
                 self.talk_service.say("Oh no, time's up?")
-                self.game_state = STATE_FEEDBACK_TIMEOUT
+                self.change_current_state(STATE_FEEDBACK_TIMEOUT)
+
             else:
                 # TODO: This is incomplete
                 # TODO: Get answer from somewhere and check against
-                self.game_state = STATE_FEEDBACK_SUCCESS
-
-
-        self.logger.info("State changed to {}".format(self.game_state))
-
-        pass
+                self.change_current_state(STATE_FEEDBACK_SUCCESS)
 
     def give_feedback(self):
 
@@ -179,15 +183,13 @@ class QuizMaster(object):
 
             try:
                 if self.game_state == STATE_AWAIT_ANSWER:
-
-                    self.game_state = STATE_FEEDBACK_ENCOURAGEMENT
+                    self.change_current_state(STATE_FEEDBACK_ENCOURAGEMENT)
 
                     self.talk_service.say("Time's almost up?")
                     self.answer_timer.cancel()
                     self.answer_timer = threading.Timer(5.0, self.evaluate_answer)
                     self.answer_timer.start()
 
-                self.logger.verbose("State changed to {}".format(self.game_state))
             except:
                 self.logger.fatal("Hopefully we never get here!")
 
