@@ -31,7 +31,7 @@ STATE_FEEDBACK_TIMEOUT = "STATE_FEEDBACK_TIMEOUT",
 #MUSIC_DIR = "/home/nao/music"
 MUSIC_DIR = "C:/GitRepos/ENG7007_PRAC1_GROUP/NaoProject/cognition/music_quiz/music"
 
-class QuizMaster(object):
+class QuizMaster:
 
     def __init__(self, app, talk, listen, remember):
 
@@ -49,6 +49,7 @@ class QuizMaster(object):
 
         self.game_state = STATE_IDLE
 
+        self.encourage_timer = None
         self.answer_timer = None
 
         self.current_question = None
@@ -150,17 +151,17 @@ class QuizMaster(object):
 
 
 
-        #elif self.game_state == STATE_FEEDBACK_SUCCESS:
-        #    raise NotImplementedError()
+        elif self.game_state == STATE_FEEDBACK_SUCCESS:
+            self.give_feedback()
 
-        #elif self.game_state == STATE_FEEDBACK_FAILURE:
-        #    raise NotImplementedError()
+        elif self.game_state == STATE_FEEDBACK_FAILURE:
+            self.give_feedback()
 
-        ##elif self.game_state == STATE_FEEDBACK_ENCOURAGEMENT:
-        ##    raise NotImplementedError()
+        elif self.game_state == STATE_FEEDBACK_ENCOURAGEMENT:
+            self.give_encouragement()
 
-        ##elif self.game_state == STATE_FEEDBACK_TIMEOUT:
-        ##    raise NotImplementedError()
+        elif self.game_state == STATE_FEEDBACK_TIMEOUT:
+            self._answer_timeout()
 
         self.logger.info("State machine ran")
 
@@ -179,6 +180,9 @@ class QuizMaster(object):
     def continue_round(self):
 
         self.logger.info("Continuing round")
+
+        self.encourage_timer = None
+        self.answer_timer = None
 
         if self.questions_asked == self.questions_per_round:
            self.talk_service.say("Round complete, you scored {} out of {}".format(self.answered_right, self.questions_per_round))
@@ -204,8 +208,8 @@ class QuizMaster(object):
         self.change_current_state(STATE_AWAIT_ANSWER)
         self.event_queue.put(None)
 
-        #self.answer_timer = threading.Timer(10.0, self.give_encouragement)
-        #self.answer_timer.start()
+        # self.encourage_timer = qi.async(self.prompt_for_encouragement, delay=10000000)
+        # self.answer_timer = qi.async(self.prompt_answer_timeout, delay=15000000)
 
     def ask_question(self):
 
@@ -213,95 +217,93 @@ class QuizMaster(object):
 
         self.current_question = random.randint(0, 1)
         if self.current_question == 0:
-            self.logger.info("Asking question 1")
             self.talk_service.say("What's the name of this tune?")
         else:
-            self.logger.info("Asking question 2")
             self.talk_service.say("Who sang this tune?")
 
-        self.logger.info("Asking question 3")
         self.questions_asked += 1
 
         self.change_current_state(STATE_PLAY_TRACK)
         self.event_queue.put(None)
 
-    def answer_timeout(self):
+    def prompt_answer_timeout(self):
 
-        self.logger.info("Answer time up")
-
+        self.logger.info("Prompt answer timeout")
+        self.change_current_state(STATE_FEEDBACK_TIMEOUT)
         self.event_queue.put(None)
 
     def _answer_timeout(self):
 
-        self.logger.info("TBD1")
+        self.logger.info("Answer time up")
 
-        #self.answer_timer.cancel()
-
+        #self.answer_timer = None
         self.talk_service.say("Oh no, time's up?")
+        self.change_current_state(STATE_CONTINUE)
 
-        self.change_current_state(STATE_FEEDBACK_TIMEOUT)
-        #self.talk_service.say("The answer was {}".format(self.current_answer))
+        self.event_queue.put(None)
 
     def evaluate_answer(self, current_guess):
 
         self.logger.info("Evaluating answer")
 
-        #self.answer_timer.cancel()
-
-        # TODO: This is incomplete
-        # TODO: Get answer from somewhere and check against
+        #self.cancel_timers()
 
         self.logger.info(current_guess)
 
         if self.current_answer == current_guess:
-            #with self.feedback_lock:
             self.change_current_state(STATE_FEEDBACK_SUCCESS)
             self.answered_right += 1
         else:
 
             self.change_current_state(STATE_FEEDBACK_FAILURE)
 
-        self.give_feedback()
+        #self.give_feedback()
+        self.event_queue.put(None)
+
+    def cancel_timers(self):
+
+        self.logger.info("Cancel timers")
+
+        self.encourage_timer.cancel()
+        if self.encourage_timer.isCanceled():
+            self.logger.info("Encourage timer canceled")
+        self.answer_timer.cancel()
+        if self.answer_timer.isCanceled():
+            self.logger.info("Answer timer canceled")
+
+        if self.encourage_timer.isRunning():
+            self.logger.info("Encourage timer running")
+        if self.answer_timer.isRunning():
+            self.logger.info("Answer timer running")
+
+        self.encourage_timer = None
+        self.answer_timer = None
+
+    def prompt_for_encouragement(self):
+
+        self.logger.info("Prompt encouragement")
+        self.change_current_state(STATE_FEEDBACK_ENCOURAGEMENT)
+        self.event_queue.put(None)
 
     def give_encouragement(self):
 
-        self.logger.info("Prompt encouragement")
-
-        self.event_queue.put(None)
-
-    def _give_encouragement(self):
-
         self.logger.info("TBD2")
 
-        #self.logger.verbose("Try acquire Mutex")
-        #with self.feedback_lock:
-        #    self.logger.verbose("Mutex acquired")
+        self.talk_service.say("Time's almost up?")
 
-        try:
-            if self.game_state == STATE_AWAIT_ANSWER:
-                self.change_current_state(STATE_FEEDBACK_ENCOURAGEMENT)
-
-                self.talk_service.say("Time's almost up?")
-                #self.answer_timer.cancel()
-                #self.answer_timer = threading.Timer(5.0, self.answer_timeout)
-                #self.answer_timer.start()
-
-        except:
-            self.logger.fatal("Hopefully we never get here!")
-
-        #self.logger.verbose("Mutex released")
+        self.change_current_state(STATE_AWAIT_ANSWER)
 
     def give_feedback(self):
 
         self.logger.info("Giving feedback")
 
-        #with self.feedback_lock:
         if self.game_state == STATE_FEEDBACK_SUCCESS:
             self.talk_service.say("Well done, that's right!")
         else:
             self.talk_service.say("Better luck next time!")
 
-        self.continue_round()
+        self.change_current_state(STATE_CONTINUE)
+        self.event_queue.put(None)
 
 if __name__ == "__main__":
 
