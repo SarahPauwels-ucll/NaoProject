@@ -1,7 +1,7 @@
 import sys
 import qi
 import random
-import threading
+import Queue
 import PlaylistManager
 
 ROBOT_IP = "127.0.0.1"
@@ -48,15 +48,17 @@ class QuizMaster(object):
         self.logger = qi.Logger("QuizMaster")
 
         self.game_state = STATE_IDLE
-        self.state_lock = threading.Lock()
 
         self.answer_timer = None
-        #self.feedback_lock = threading.Lock()
 
+        self.current_question = None
         self.current_answer = None
         self.questions_asked = 0
         self.answered_right = 0
-        self.questions_per_round = 5
+        self.questions_per_round = 2#5
+
+        self.event_queue = Queue.Queue()
+        self.worker_thread = None
 
     def start(self):
 
@@ -79,9 +81,26 @@ class QuizMaster(object):
 
         self.logger.info("QuizMaster subscriptions completed")
 
+        #self.worker_thread.start()
+        self.worker_thread = qi.PeriodicTask()
+        self.worker_thread.setCallback(self.run)
+        self.worker_thread.setUsPeriod(1000000)
+        self.worker_thread.start(True)
+
+        self.logger.info("QuizMaster worker thread started")
+
         #if isSrAvailable:
         #    self.listen.setVocabulary(["start game", "start quiz"], False)
         #    self.listen.pause(False)
+
+    def run(self):
+
+        try:
+            event = self.event_queue.get(False)
+            self._run_state_machine(event)
+            self.event_queue.task_done()
+        except Queue.Empty:
+            pass
 
     def stop(self):
         #if self.memory_subscriber:
@@ -93,36 +112,37 @@ class QuizMaster(object):
 
     def change_current_state(self, to_state):
 
-        self.logger.verbose("Try acquire state change mutex")
-
-        with self.state_lock:
-            self.logger.verbose("Acquired state change mutex")
-            self.game_state = to_state
-            self.logger.verbose("State changed to {}".format(self.game_state))
-
-        self.logger.verbose("Released state change mutex")
+        self.game_state = to_state
 
     def on_word_recognised(self, value):
 
         self.logger.info("Hit Word Recognised Callback")
 
+        self.event_queue.put(value)
+
+    def _run_state_machine(self, value):
+
+        self.logger.info("Run state machine")
+        self.logger.info(self.game_state)
+
         if self.game_state == STATE_IDLE and value[0] == "start game":
 
+            self.change_current_state(STATE_START_GAME)
+            self.event_queue.put(None)
+
+        elif self.game_state == STATE_START_GAME:
             self.start_game()
 
-        #elif self.game_state == STATE_START_GAME:
-        #    raise NotImplementedError()
-
         elif self.game_state == STATE_CONTINUE:
-            raise NotImplementedError()
+            self.continue_round()
 
         elif self.game_state == STATE_PLAY_TRACK:
-            raise NotImplementedError()
+            self.play_track()
 
-        #elif self.game_state == STATE_ASK_QUESTION:
-        #    raise NotImplementedError()
+        elif self.game_state == STATE_ASK_QUESTION:
+            self.ask_question()
 
-        elif self.game_state == STATE_AWAIT_ANSWER:
+        elif self.game_state == STATE_AWAIT_ANSWER and value is not None:
 
             self.evaluate_answer(value[0])
 
@@ -142,72 +162,91 @@ class QuizMaster(object):
         ##elif self.game_state == STATE_FEEDBACK_TIMEOUT:
         ##    raise NotImplementedError()
 
+        self.logger.info("State machine ran")
+
     def start_game(self):
+
+        self.logger.info("Starting game")
 
         self.change_current_state(STATE_CONTINUE)
 
         self.questions_asked = 0
         self.answered_right = 0
 
-        self.continue_round()
+        self.change_current_state(STATE_CONTINUE)
+        self.event_queue.put(None)
 
     def continue_round(self):
 
-        if self.questions_asked == self.questions_per_round:
-            self.talk_service.say("Round complete, you scored {} out of {}".format(self.answered_right, self.questions_per_round))
-            sys.exit(0)
+        self.logger.info("Continuing round")
 
-        self.change_current_state(STATE_CONTINUE)
+        if self.questions_asked == self.questions_per_round:
+           self.talk_service.say("Round complete, you scored {} out of {}".format(self.answered_right, self.questions_per_round))
+           sys.exit(0)
+
         self.current_answer = None
         self.talk_service.say("Next question")
-        question = self.ask_question()
-        self.play_track(question)
+        self.change_current_state(STATE_ASK_QUESTION)
+        self.event_queue.put(None)
 
-    def play_track(self, question):
+    def play_track(self):
+
+        self.logger.info("Playing track")
 
         # TODO: Capture these in game state
         title, artist = self.playlist_manager.playTrack()
-        if question == 0:
+        if self.current_question == 0:
             self.current_answer = title
         else:
             self.current_answer = artist
         self.logger.info(self.current_answer)
 
         self.change_current_state(STATE_AWAIT_ANSWER)
+        self.event_queue.put(None)
 
-        self.answer_timer = threading.Timer(10.0, self.give_encouragement)
-        self.answer_timer.start()
+        #self.answer_timer = threading.Timer(10.0, self.give_encouragement)
+        #self.answer_timer.start()
 
     def ask_question(self):
 
-        question = random.randint(0, 1)
-        if question == 0:
+        self.logger.info("Asking question")
+
+        self.current_question = random.randint(0, 1)
+        if self.current_question == 0:
+            self.logger.info("Asking question 1")
             self.talk_service.say("What's the name of this tune?")
         else:
+            self.logger.info("Asking question 2")
             self.talk_service.say("Who sang this tune?")
 
+        self.logger.info("Asking question 3")
         self.questions_asked += 1
 
-        self.change_current_state(STATE_ASK_QUESTION)
-
-        return question
+        self.change_current_state(STATE_PLAY_TRACK)
+        self.event_queue.put(None)
 
     def answer_timeout(self):
 
-        self.answer_timer.cancel()
+        self.logger.info("Answer time up")
+
+        self.event_queue.put(None)
+
+    def _answer_timeout(self):
+
+        self.logger.info("TBD1")
+
+        #self.answer_timer.cancel()
 
         self.talk_service.say("Oh no, time's up?")
 
-        #with self.feedback_lock:
         self.change_current_state(STATE_FEEDBACK_TIMEOUT)
         #self.talk_service.say("The answer was {}".format(self.current_answer))
 
-        # TODO: There's a thread issue round here I'm sure
-        #self.continue_round()
-
     def evaluate_answer(self, current_guess):
 
-        self.answer_timer.cancel()
+        self.logger.info("Evaluating answer")
+
+        #self.answer_timer.cancel()
 
         # TODO: This is incomplete
         # TODO: Get answer from somewhere and check against
@@ -226,6 +265,14 @@ class QuizMaster(object):
 
     def give_encouragement(self):
 
+        self.logger.info("Prompt encouragement")
+
+        self.event_queue.put(None)
+
+    def _give_encouragement(self):
+
+        self.logger.info("TBD2")
+
         #self.logger.verbose("Try acquire Mutex")
         #with self.feedback_lock:
         #    self.logger.verbose("Mutex acquired")
@@ -235,9 +282,9 @@ class QuizMaster(object):
                 self.change_current_state(STATE_FEEDBACK_ENCOURAGEMENT)
 
                 self.talk_service.say("Time's almost up?")
-                self.answer_timer.cancel()
-                self.answer_timer = threading.Timer(5.0, self.answer_timeout)
-                self.answer_timer.start()
+                #self.answer_timer.cancel()
+                #self.answer_timer = threading.Timer(5.0, self.answer_timeout)
+                #self.answer_timer.start()
 
         except:
             self.logger.fatal("Hopefully we never get here!")
@@ -245,6 +292,8 @@ class QuizMaster(object):
         #self.logger.verbose("Mutex released")
 
     def give_feedback(self):
+
+        self.logger.info("Giving feedback")
 
         #with self.feedback_lock:
         if self.game_state == STATE_FEEDBACK_SUCCESS:
