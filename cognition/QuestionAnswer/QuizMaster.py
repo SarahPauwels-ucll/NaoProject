@@ -18,7 +18,8 @@ proxies = [
 
 STATE_IDLE = "STATE_IDLE"
 STATE_START_GAME = "STATE_START_GAME"
-STATE_CONTINUE = "STATE_CONTINUE"
+STATE_CONTINUE_GAME = "STATE_CONTINUE_GAME"
+STATE_CONTINUE_ROUND = "STATE_CONTINUE_ROUND"
 STATE_PLAY_TRACK = "STATE_PLAY_TRACK",
 STATE_ASK_QUESTION = "STATE_ASK_QUESTION",
 STATE_AWAIT_ANSWER = "STATE_AWAIT_ANSWER",
@@ -153,7 +154,10 @@ class QuizMaster:
         elif self.game_state == STATE_START_GAME:
             self.start_game()
 
-        elif self.game_state == STATE_CONTINUE:
+        elif self.game_state == STATE_CONTINUE_GAME:
+            self.start_next_round(value[0])
+
+        elif self.game_state == STATE_CONTINUE_ROUND:
             self.continue_round()
 
         elif self.game_state == STATE_PLAY_TRACK:
@@ -183,13 +187,27 @@ class QuizMaster:
 
         self.logger.info("Starting game")
 
-        self.change_current_state(STATE_CONTINUE)
+        #self.change_current_state(STATE_CONTINUE)
 
         self.questions_asked = 0
         self.answered_right = 0
 
-        self.change_current_state(STATE_CONTINUE)
+        self.change_current_state(STATE_CONTINUE_ROUND)
         self.event_queue.put(None)
+
+    def start_next_round(self, isContinue):
+
+        if isContinue:
+            self.answered_right = 0
+            self.questions_asked = 0
+
+            self.change_current_state(STATE_CONTINUE_ROUND)
+            self.event_queue.put(None)
+        else:
+            self.talk_service.say("Oh, ok. See you next time!")
+            self.set_asr_vocabulary(["start game"])
+            self.change_current_state(STATE_IDLE)
+            self.event_queue.put(None)
 
     def continue_round(self):
 
@@ -202,6 +220,10 @@ class QuizMaster:
            self.talk_service.say("Round complete, you scored {} out of {}".format(self.answered_right, self.questions_per_round))
 
            # TODO: Needs to ask if to play another round, but actually I think we another state.
+           self.talk_service.say("Shall we play again?")
+           self.set_asr_vocabulary(['yes', 'no' ])
+           # TODO: We would need a timeout here
+
            #self.answered_right = 0
            #self.questions_asked = 0
            sys.exit(0)
@@ -258,7 +280,7 @@ class QuizMaster:
 
         #self.answer_timer = None
         self.talk_service.say("Oh no, time's up?")
-        self.change_current_state(STATE_CONTINUE)
+        self.change_current_state(STATE_CONTINUE_ROUND)
 
         self.event_queue.put(None)
 
@@ -322,7 +344,7 @@ class QuizMaster:
         else:
             self.talk_service.say("Better luck next time!")
 
-        self.change_current_state(STATE_CONTINUE)
+        self.change_current_state(STATE_CONTINUE_ROUND)
         self.event_queue.put(None)
 
 if __name__ == "__main__":
