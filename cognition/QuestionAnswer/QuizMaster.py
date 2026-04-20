@@ -117,6 +117,10 @@ class QuizMaster:
         self.talk_service = None
         #raise RuntimeError()
 
+        mod = qi.module("qicore")
+        logmanager = app.session.service("LogManager")
+        logmanager.removeProvider(self.providerId)
+
     def change_current_state(self, to_state):
 
         self.game_state = to_state
