@@ -240,10 +240,7 @@ class QuizMaster:
 
             self.change_current_state(STATE_CONTINUE_GAME)
             self.event_queue.put(None)
-            #self.answered_right = 0
-            #self.questions_asked = 0
             return
-            #sys.exit(0)
 
         self.current_answer = None
         self.talk_service.say("Next question")
@@ -316,7 +313,6 @@ class QuizMaster:
 
             self.change_current_state(STATE_FEEDBACK_FAILURE)
 
-        #self.give_feedback()
         self.event_queue.put(None)
 
     def cancel_timers(self):
