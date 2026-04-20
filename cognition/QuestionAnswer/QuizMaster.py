@@ -155,7 +155,7 @@ class QuizMaster:
             self.start_game()
 
         elif self.game_state == STATE_CONTINUE_GAME:
-            self.start_next_round(value[0])
+            self.start_next_round(value)
 
         elif self.game_state == STATE_CONTINUE_ROUND:
             self.continue_round()
@@ -197,7 +197,7 @@ class QuizMaster:
 
     def start_next_round(self, isContinue):
 
-        if isContinue == "yes" and value[1] > 0.4:
+        if isContinue == "yes" and isContinue[1] > 0.4:
             self.answered_right = 0
             self.questions_asked = 0
 
