@@ -70,7 +70,7 @@ class QuizMaster:
     def set_asr_vocabulary(self, vocabulary):
 
         self.listen.pause(True)
-        #vocabulary = ["start game", ]
+        self.setLanguage("English")
         self.listen.setVocabulary(vocabulary, False)
         self.listen.pause(False)
 
@@ -147,7 +147,7 @@ class QuizMaster:
 
         self.logger.info("Run state machine")
 
-        if self.game_state == STATE_IDLE and value[0] == "start game":
+        if self.game_state == STATE_IDLE and value[0] == "start game" and value[1] > 0.4:
             self.change_current_state(STATE_START_GAME)
             self.event_queue.put(None)
 
@@ -167,7 +167,7 @@ class QuizMaster:
             self.ask_question()
 
         elif self.game_state == STATE_AWAIT_ANSWER and value is not None:
-            self.evaluate_answer(value[0])
+            self.evaluate_answer(value)
 
         elif self.game_state == STATE_FEEDBACK_SUCCESS:
             self.give_feedback()
@@ -197,7 +197,7 @@ class QuizMaster:
 
     def start_next_round(self, isContinue):
 
-        if isContinue == "yes":
+        if isContinue == "yes" and value[1] > 0.4:
             self.answered_right = 0
             self.questions_asked = 0
 
@@ -296,7 +296,7 @@ class QuizMaster:
 
         self.logger.info(current_guess)
 
-        if self.current_answer == current_guess:
+        if self.current_answer == current_guess[0] and current_guess[1] > 0.4:
             self.change_current_state(STATE_FEEDBACK_SUCCESS)
             self.answered_right += 1
         else:
