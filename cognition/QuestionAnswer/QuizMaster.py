@@ -5,9 +5,8 @@ import Queue
 import PlaylistManager
 
 ROBOT_IP = "127.0.0.1"
-#ROBOT_PORT = "64286"
-#ROBOT_IP = "172.18.16.47"
-ROBOT_PORT = "9559"
+ROBOT_PORT = "52294"
+#ROBOT_PORT = "9559"
 
 proxies = [
     "ALTextToSpeech",
@@ -29,29 +28,28 @@ STATE_FEEDBACK_FAILURE = "STATE_FEEDBACK_FAILURE",
 STATE_FEEDBACK_ENCOURAGEMENT = "STATE_FEEDBACK_ENCOURAGEMENT",
 STATE_FEEDBACK_TIMEOUT = "STATE_FEEDBACK_TIMEOUT",
 
-MUSIC_DIR = "/home/nao/music"
-#MUSIC_DIR = "C:/GitRepos/ENG7007_PRAC1_GROUP/NaoProject/cognition/music_quiz/music"
+#MUSIC_DIR = "/home/nao/music"
+MUSIC_DIR = "C:/GitRepos/ENG7007_PRAC1_GROUP/NaoProject/cognition/music_quiz/music"
 
 class QuizMaster:
 
-    def __init__(self, app, talk, listen, remember):
+    def __init__(self, app):
 
         self.app = app
 
         self.playlist_manager = None
 
-        self.talk_service = talk
-        self.listen = None #listen
+        self.talk_service = self.app.session.service(proxies[0])
+        self.listen = None
 
-        self.memory_service = remember
+        self.memory_service = self.app.session.service(proxies[2])
         self.memory_subscriber = None
 
-        mod = qi.module("qicore")
-        logmanager = app.session.service("LogManager")
-        self.provider = mod.createObject("LogProvider", logmanager)
-        self.providerId = logmanager.addProvider(self.provider)
-        #self.logger = qi.Logger("QuizMaster")
-        self.logger = qi.Logger("QuizMaster")
+        self.provider = None
+        self.providerId = None
+        self.logger = None
+
+        self.register_logger()
 
         self.game_state = STATE_IDLE
 
@@ -67,10 +65,28 @@ class QuizMaster:
         self.event_queue = Queue.Queue()
         self.worker_thread = None
 
+    def register_logger(self):
+
+        try:
+            mod = qi.module("qicore")
+            logmanager = app.session.service("LogManager")
+            self.provider = mod.createObject("LogProvider", logmanager)
+            self.providerId = logmanager.addProvider(self.provider)
+        except RuntimeError:
+            print "Defaulting to Virtual Robot Logging Mode"
+
+        self.logger = qi.Logger("QuizMaster")
+
+    def unregister_logger(self):
+
+        if (self.providerId != None):
+            mod = qi.module("qicore")
+            logmanager = app.session.service("LogManager")
+            logmanager.removeProvider(self.providerId)
+
     def set_asr_vocabulary(self, vocabulary):
 
         self.listen.pause(True)
-        #self.setLanguage("English")
         self.listen.setVocabulary(vocabulary, False)
         self.listen.pause(False)
 
@@ -129,9 +145,7 @@ class QuizMaster:
         self.talk_service = None
         #raise RuntimeError()
 
-        mod = qi.module("qicore")
-        logmanager = app.session.service("LogManager")
-        logmanager.removeProvider(self.providerId)
+        self.unregister_logger()
 
     def change_current_state(self, to_state):
 
@@ -363,14 +377,10 @@ if __name__ == "__main__":
         ])
         app.start()
 
-        talk = app.session.service(proxies[0])
-        listen = None #app.session.service(proxies[1])
-        remember = app.session.service(proxies[2])
-
-        quiz_master = QuizMaster(app, talk, listen, remember)
+        quiz_master = QuizMaster(app)
         quiz_master.start()
 
-        app.run()
+        #app.run()
 
 
     except RuntimeError as ex:
