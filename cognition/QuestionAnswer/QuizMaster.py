@@ -200,6 +200,7 @@ class QuizMaster:
         if isContinue[0] == "yes" and isContinue[1] > 0.4:
             self.answered_right = 0
             self.questions_asked = 0
+            # TODO: Increase difficulty level
 
             self.change_current_state(STATE_CONTINUE_ROUND)
             self.event_queue.put(None)
