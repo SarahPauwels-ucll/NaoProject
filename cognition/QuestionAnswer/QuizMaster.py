@@ -62,6 +62,7 @@ class QuizMaster:
         self.questions_asked = 0
         self.answered_right = 0
         self.questions_per_round = 2#5
+        self.round_number = 0
 
         self.event_queue = Queue.Queue()
         self.worker_thread = None
@@ -114,7 +115,6 @@ class QuizMaster:
 
         self.logger.info("QuizMaster subscriptions completed")
 
-        #self.worker_thread.start()
         self.worker_thread = qi.PeriodicTask()
         self.worker_thread.setCallback(self.run)
         self.worker_thread.setUsPeriod(1000000)
@@ -195,10 +195,11 @@ class QuizMaster:
 
         self.logger.info("Starting game")
 
-        #self.change_current_state(STATE_CONTINUE)
-
         self.questions_asked = 0
         self.answered_right = 0
+
+        self.round_number = 1
+        self.talk_service.say("Round {}".format(self.round_number))
 
         self.change_current_state(STATE_CONTINUE_ROUND)
         self.event_queue.put(None)
@@ -208,7 +209,10 @@ class QuizMaster:
         if isContinue[0] == "yes" and isContinue[1] > 0.4:
             self.answered_right = 0
             self.questions_asked = 0
+
             # TODO: Increase difficulty level
+            self.round_number += 1
+            self.talk_service.say("Round {}".format(self.round_number))
 
             self.change_current_state(STATE_CONTINUE_ROUND)
             self.event_queue.put(None)
