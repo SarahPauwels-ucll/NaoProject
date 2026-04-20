@@ -40,7 +40,7 @@ class QuizMaster:
         self.playlist_manager = None
 
         self.talk_service = talk
-        self.listen = listen
+        self.listen = None #listen
 
         self.memory_service = remember
         self.memory_subscriber = None
@@ -66,6 +66,13 @@ class QuizMaster:
         self.event_queue = Queue.Queue()
         self.worker_thread = None
 
+    def set_asr_vocabulary(self, vocabulary):
+
+        self.listen.pause(True)
+        #vocabulary = ["start game", ]
+        self.listen.setVocabulary(vocabulary, False)
+        self.listen.pause(False)
+
     def start(self):
 
         self.logger.info("QuizMaster Starting")
@@ -76,7 +83,11 @@ class QuizMaster:
         isSrAvailable = True
         try:
             self.listen = app.session.service("ALSpeechRecognition")
-            self.listen.pause(True)
+            #self.listen.pause(True)
+            #vocabulary = ["start game", ]
+            #self.listen.setVocabulary(vocabulary, False)
+            #self.listen.pause(False)
+            self.set_asr_vocabulary(["start game", ])
         except:
             self.logger.error("Failed to get a handle to ALSpeechRecognition, defaulting to Virtual Robot Test Mode")
             print "Failed to get a handle to ALSpeechRecognition, defaulting to Virtual Robot Test Mode"
@@ -212,6 +223,8 @@ class QuizMaster:
             self.current_answer = artist
         self.logger.info(self.current_answer)
 
+        self.set_asr_vocabulary([self.current_answer, ])
+
         self.change_current_state(STATE_AWAIT_ANSWER)
         self.event_queue.put(None)
 
@@ -324,7 +337,7 @@ if __name__ == "__main__":
         app.start()
 
         talk = app.session.service(proxies[0])
-        listen = app.session.service(proxies[1])
+        listen = None #app.session.service(proxies[1])
         remember = app.session.service(proxies[2])
 
         quiz_master = QuizMaster(app, talk, listen, remember)
