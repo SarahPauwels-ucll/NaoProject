@@ -5,9 +5,9 @@ import Queue
 import PlaylistManager
 
 ROBOT_IP = "127.0.0.1"
-ROBOT_PORT = "64286"
+#ROBOT_PORT = "64286"
 #ROBOT_IP = "172.18.16.47"
-#ROBOT_PORT = "9559"
+ROBOT_PORT = "9559"
 
 proxies = [
     "ALTextToSpeech",
@@ -28,8 +28,8 @@ STATE_FEEDBACK_FAILURE = "STATE_FEEDBACK_FAILURE",
 STATE_FEEDBACK_ENCOURAGEMENT = "STATE_FEEDBACK_ENCOURAGEMENT",
 STATE_FEEDBACK_TIMEOUT = "STATE_FEEDBACK_TIMEOUT",
 
-#MUSIC_DIR = "/home/nao/music"
-MUSIC_DIR = "C:/GitRepos/ENG7007_PRAC1_GROUP/NaoProject/cognition/music_quiz/music"
+MUSIC_DIR = "/home/nao/music"
+#MUSIC_DIR = "C:/GitRepos/ENG7007_PRAC1_GROUP/NaoProject/cognition/music_quiz/music"
 
 class QuizMaster:
 
@@ -45,6 +45,11 @@ class QuizMaster:
         self.memory_service = remember
         self.memory_subscriber = None
 
+        mod = qi.module("qicore")
+        logmanager = app.session.service("LogManager")
+        self.provider = mod.createObject("LogProvider", logmanager)
+        self.providerId = logmanager.addProvider(self.provider)
+        #self.logger = qi.Logger("QuizMaster")
         self.logger = qi.Logger("QuizMaster")
 
         self.game_state = STATE_IDLE
@@ -68,13 +73,14 @@ class QuizMaster:
         self.playlist_manager = PlaylistManager.PlaylistManager(self.app, MUSIC_DIR)
         self.playlist_manager.initialisePlaylist()
 
-        # isSrAvailable = True
-        # try:
-        #     self.listen = app.session.service("ALSpeechRecognition")
-        #     self.listen.pause(True)
-        # except:
-        #     self.logger.error("Failed to get a handle to ALSpeechRecognition, defaulting to Virtual Robot Test Mode")
-        #     isSrAvailable = False
+        isSrAvailable = True
+        try:
+            self.listen = app.session.service("ALSpeechRecognition")
+            self.listen.pause(True)
+        except:
+            self.logger.error("Failed to get a handle to ALSpeechRecognition, defaulting to Virtual Robot Test Mode")
+            print "Failed to get a handle to ALSpeechRecognition, defaulting to Virtual Robot Test Mode"
+            isSrAvailable = False
 
         #self.memory_subscriber.signal.connect(self.on_face_detected)
         self.memory_subscriber = self.memory_service.subscriber("WordRecognized")
@@ -124,10 +130,8 @@ class QuizMaster:
     def _run_state_machine(self, value):
 
         self.logger.info("Run state machine")
-        self.logger.info(self.game_state)
 
         if self.game_state == STATE_IDLE and value[0] == "start game":
-
             self.change_current_state(STATE_START_GAME)
             self.event_queue.put(None)
 
@@ -144,12 +148,7 @@ class QuizMaster:
             self.ask_question()
 
         elif self.game_state == STATE_AWAIT_ANSWER and value is not None:
-
             self.evaluate_answer(value[0])
-
-        #elif self.game_state == STATE_EVALUATE_ANSWER:
-
-
 
         elif self.game_state == STATE_FEEDBACK_SUCCESS:
             self.give_feedback()
@@ -317,7 +316,7 @@ if __name__ == "__main__":
         app.start()
 
         talk = app.session.service(proxies[0])
-        listen = None # app.session.service(proxies[1])
+        listen = app.session.service(proxies[1])
         remember = app.session.service(proxies[2])
 
         quiz_master = QuizMaster(app, talk, listen, remember)
