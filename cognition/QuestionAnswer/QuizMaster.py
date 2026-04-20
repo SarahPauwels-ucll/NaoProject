@@ -217,16 +217,19 @@ class QuizMaster:
         self.answer_timer = None
 
         if self.questions_asked == self.questions_per_round:
-           self.talk_service.say("Round complete, you scored {} out of {}".format(self.answered_right, self.questions_per_round))
 
-           # TODO: Needs to ask if to play another round, but actually I think we another state.
-           self.talk_service.say("Shall we play again?")
-           self.set_asr_vocabulary(['yes', 'no' ])
-           # TODO: We would need a timeout here
+            self.talk_service.say("Round complete, you scored {} out of {}".format(self.answered_right, self.questions_per_round))
 
-           #self.answered_right = 0
-           #self.questions_asked = 0
-           sys.exit(0)
+            # TODO: Needs to ask if to play another round, but actually I think we another state.
+            self.talk_service.say("Shall we play again?")
+            self.set_asr_vocabulary(['yes', 'no' ])
+            # TODO: We would need a timeout here
+
+            self.change_current_state(STATE_CONTINUE_GAME)
+            self.event_queue.put(None)
+            #self.answered_right = 0
+            #self.questions_asked = 0
+            #sys.exit(0)
 
         self.current_answer = None
         self.talk_service.say("Next question")
