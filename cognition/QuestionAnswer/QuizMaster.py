@@ -41,6 +41,7 @@ class QuizMaster:
 
         self.talk_service = self.app.session.service(proxies[0])
         self.listen = None
+        self.isSrAvailable = False
 
         self.memory_service = self.app.session.service(proxies[2])
         self.memory_subscriber = None
@@ -86,9 +87,10 @@ class QuizMaster:
 
     def set_asr_vocabulary(self, vocabulary):
 
-        self.listen.pause(True)
-        self.listen.setVocabulary(vocabulary, False)
-        self.listen.pause(False)
+        if self.isSrAvailable:
+            self.listen.pause(True)
+            self.listen.setVocabulary(vocabulary, False)
+            self.listen.pause(False)
 
     def start(self):
 
@@ -97,13 +99,9 @@ class QuizMaster:
         self.playlist_manager = PlaylistManager.PlaylistManager(self.app, MUSIC_DIR)
         self.playlist_manager.initialisePlaylist()
 
-        isSrAvailable = True
         try:
             self.listen = app.session.service("ALSpeechRecognition")
-            #self.listen.pause(True)
-            #vocabulary = ["start game", ]
-            #self.listen.setVocabulary(vocabulary, False)
-            #self.listen.pause(False)
+            self.isSrAvailable = True
             self.set_asr_vocabulary(["start game", ])
         except:
             self.logger.error("Failed to get a handle to ALSpeechRecognition, defaulting to Virtual Robot Test Mode")
@@ -124,10 +122,6 @@ class QuizMaster:
 
         self.logger.info("QuizMaster worker thread started")
 
-        #if isSrAvailable:
-        #    self.listen.setVocabulary(["start game", "start quiz"], False)
-        #    self.listen.pause(False)
-
     def run(self):
 
         try:
@@ -141,9 +135,9 @@ class QuizMaster:
         #if self.memory_subscriber:
         #    self.memory_subscriber.signal.disconnect(self.on_face_detected)
 
-        #self.talk_service.stop()
+        if self.isSrAvailable:
+            self.talk_service.stop()
         self.talk_service = None
-        #raise RuntimeError()
 
         self.unregister_logger()
 
@@ -161,14 +155,14 @@ class QuizMaster:
 
         self.logger.info("Run state machine")
 
-        if self.game_state == STATE_IDLE and value[0] == "start game" and value[1] > 0.4:
+        if self.game_state == STATE_IDLE and value is not None and value[0] == "start game" and value[1] > 0.4:
             self.change_current_state(STATE_START_GAME)
             self.event_queue.put(None)
 
         elif self.game_state == STATE_START_GAME:
             self.start_game()
 
-        elif self.game_state == STATE_CONTINUE_GAME:
+        elif self.game_state == STATE_CONTINUE_GAME and value is not None:
             self.start_next_round(value)
 
         elif self.game_state == STATE_CONTINUE_ROUND:
@@ -220,7 +214,7 @@ class QuizMaster:
             self.event_queue.put(None)
         elif isContinue[0] == "no" and isContinue[1] > 0.4:
             self.talk_service.say("Oh, ok. See you next time!")
-            self.set_asr_vocabulary(["start game"])
+            self.set_asr_vocabulary(["start game", ])
             self.change_current_state(STATE_IDLE)
             self.event_queue.put(None)
 
@@ -380,7 +374,7 @@ if __name__ == "__main__":
         quiz_master = QuizMaster(app)
         quiz_master.start()
 
-        #app.run()
+        app.run()
 
 
     except RuntimeError as ex:
