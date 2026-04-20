@@ -229,6 +229,7 @@ class QuizMaster:
             self.event_queue.put(None)
             #self.answered_right = 0
             #self.questions_asked = 0
+            return
             #sys.exit(0)
 
         self.current_answer = None
