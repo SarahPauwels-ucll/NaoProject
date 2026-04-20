@@ -203,7 +203,7 @@ class QuizMaster:
 
             self.change_current_state(STATE_CONTINUE_ROUND)
             self.event_queue.put(None)
-        else:
+        elif isContinue == "no" and isContinue[1] > 0.4:
             self.talk_service.say("Oh, ok. See you next time!")
             self.set_asr_vocabulary(["start game"])
             self.change_current_state(STATE_IDLE)
