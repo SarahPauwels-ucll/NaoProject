@@ -197,7 +197,7 @@ class QuizMaster:
 
     def start_next_round(self, isContinue):
 
-        if isContinue:
+        if isContinue == "yes":
             self.answered_right = 0
             self.questions_asked = 0
 
