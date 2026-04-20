@@ -70,7 +70,7 @@ class QuizMaster:
     def set_asr_vocabulary(self, vocabulary):
 
         self.listen.pause(True)
-        self.setLanguage("English")
+        #self.setLanguage("English")
         self.listen.setVocabulary(vocabulary, False)
         self.listen.pause(False)
 
