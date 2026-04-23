@@ -101,6 +101,7 @@ class QuizMaster:
 
         self.start_playback_manager()
         self.start_physical_feedback()
+        self.start_automatic_speech_recognition()
         self.start_word_recognition()
 
         self.logger.info("QuizMaster Started")
@@ -111,6 +112,8 @@ class QuizMaster:
 
         self.playlist_manager = pm.PlaylistManager(self.app, MUSIC_DIR)
         self.playlist_manager.initialisePlaylist()
+
+    def start_automatic_speech_recognition(self):
 
         try:
             self.listen = app.session.service("ALSpeechRecognition")
