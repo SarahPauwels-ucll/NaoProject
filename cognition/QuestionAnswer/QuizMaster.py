@@ -3,6 +3,7 @@ import qi
 import random
 import Queue
 import PlaylistManager
+import PhysicalFeedback
 
 ROBOT_IP = "127.0.0.1"
 ROBOT_PORT = "52294"
@@ -38,6 +39,7 @@ class QuizMaster:
         self.app = app
 
         self.playlist_manager = None
+        self.physical_feedback = None
 
         self.talk_service = self.app.session.service(proxies[0])
         self.listen = None
@@ -97,6 +99,15 @@ class QuizMaster:
 
         self.logger.info("QuizMaster Starting")
 
+        self.start_playback_manager()
+        self.start_word_recognition()
+
+        self.logger.info("QuizMaster Started")
+
+    def start_playback_manager(self):
+
+        self.logger.info("Starting playback manager")
+
         self.playlist_manager = PlaylistManager.PlaylistManager(self.app, MUSIC_DIR)
         self.playlist_manager.initialisePlaylist()
 
@@ -107,7 +118,10 @@ class QuizMaster:
         except:
             self.logger.error("Failed to get a handle to ALSpeechRecognition, defaulting to Virtual Robot Test Mode")
             print "Failed to get a handle to ALSpeechRecognition, defaulting to Virtual Robot Test Mode"
-            isSrAvailable = False
+
+    def start_word_recognition(self):
+
+        self.logger.info("Starting word recognition")
 
         #self.memory_subscriber.signal.connect(self.on_face_detected)
         self.memory_subscriber = self.memory_service.subscriber("WordRecognized")
