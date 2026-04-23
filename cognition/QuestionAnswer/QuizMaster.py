@@ -2,11 +2,11 @@ import sys
 import qi
 import random
 import Queue
-import PlaylistManager
-import PhysicalFeedback
+import PlaylistManager as pm
+import PhysicalFeedback as pf
 
 ROBOT_IP = "127.0.0.1"
-ROBOT_PORT = "52294"
+ROBOT_PORT = "59581"
 #ROBOT_PORT = "9559"
 
 proxies = [
@@ -100,6 +100,7 @@ class QuizMaster:
         self.logger.info("QuizMaster Starting")
 
         self.start_playback_manager()
+        self.start_physical_feedback()
         self.start_word_recognition()
 
         self.logger.info("QuizMaster Started")
@@ -108,7 +109,7 @@ class QuizMaster:
 
         self.logger.info("Starting playback manager")
 
-        self.playlist_manager = PlaylistManager.PlaylistManager(self.app, MUSIC_DIR)
+        self.playlist_manager = pm.PlaylistManager(self.app, MUSIC_DIR)
         self.playlist_manager.initialisePlaylist()
 
         try:
@@ -118,6 +119,10 @@ class QuizMaster:
         except:
             self.logger.error("Failed to get a handle to ALSpeechRecognition, defaulting to Virtual Robot Test Mode")
             print "Failed to get a handle to ALSpeechRecognition, defaulting to Virtual Robot Test Mode"
+
+    def start_physical_feedback(self):
+
+        self.physical_feedback = pf.PhysicalFeedback(self.app)
 
     def start_word_recognition(self):
 
@@ -307,6 +312,7 @@ class QuizMaster:
         self.logger.info("Answer time up")
 
         #self.answer_timer = None
+        self.physical_feedback.commiserate()
         self.talk_service.say("Oh no, time's up?")
         self.change_current_state(STATE_CONTINUE_ROUND)
 
@@ -367,8 +373,10 @@ class QuizMaster:
         self.logger.info("Giving feedback")
 
         if self.game_state == STATE_FEEDBACK_SUCCESS:
+            self.physical_feedback.celebrate()
             self.talk_service.say("Well done, that's right!")
         else:
+            self.physical_feedback.commiserate()
             self.talk_service.say("Better luck next time!")
 
         self.change_current_state(STATE_CONTINUE_ROUND)
