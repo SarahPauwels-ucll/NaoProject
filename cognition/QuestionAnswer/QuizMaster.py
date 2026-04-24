@@ -165,7 +165,11 @@ class QuizMaster:
 
     def change_current_state(self, to_state):
 
+        self.logger.info("Changing game state: ")
+
         self.game_state = to_state
+
+        self.logger.info(self.game_state)
 
     def on_word_recognised(self, value):
 
@@ -328,6 +332,7 @@ class QuizMaster:
         #self.cancel_timers()
 
         self.logger.info(current_guess)
+        self.logger.info(self.current_answer)
 
         if self.current_answer == current_guess[0] and current_guess[1] > 0.4:
             self.change_current_state(STATE_FEEDBACK_SUCCESS)
@@ -365,7 +370,7 @@ class QuizMaster:
 
     def give_encouragement(self):
 
-        self.logger.info("TBD2")
+        self.logger.info("Giving encouragement")
 
         self.talk_service.say("Time's almost up?")
 
