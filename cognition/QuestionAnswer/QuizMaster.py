@@ -95,7 +95,7 @@ class QuizMaster:
         if self.isSrAvailable:
             self.logger.info("ASR enabled, setting vocabulary")
             self.listen.pause(True)
-            self.listen.setVocabulary(vocabulary, True)
+            self.listen.setVocabulary(vocabulary, False)
             self.listen.pause(False)
 
             self.logger.info(vocabulary)
@@ -142,10 +142,11 @@ class QuizMaster:
 
         self.logger.info("QuizMaster subscriptions completed")
 
+        # Don't stop this, this runs the program, lol!
         self.worker_thread = qi.PeriodicTask()
         self.worker_thread.setCallback(self.run)
         self.worker_thread.setUsPeriod(1000000)
-        #self.worker_thread.start(True)
+        self.worker_thread.start(True)
 
         self.logger.info("QuizMaster worker thread started")
 
@@ -282,7 +283,6 @@ class QuizMaster:
 
         self.logger.info("Playing track")
 
-        # TODO: Capture these in game state
         title, artist = self.playlist_manager.playTrack()
         if self.current_question == 0:
             self.current_answer = title
@@ -403,6 +403,7 @@ if __name__ == "__main__":
         app = qi.Application([
             "QuizMaster",
             connection_string,
+            "--synchronous-log",
         ])
         app.start()
 
