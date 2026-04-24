@@ -90,10 +90,15 @@ class QuizMaster:
 
     def set_asr_vocabulary(self, vocabulary):
 
+        self.logger.info("Starting to set vocabulary")
+
         if self.isSrAvailable:
+            self.logger.info("ASR enabled, setting vocabulary")
             self.listen.pause(True)
-            self.listen.setVocabulary(vocabulary, False)
+            self.listen.setVocabulary(vocabulary, True)
             self.listen.pause(False)
+
+            self.logger.info(vocabulary)
 
     def start(self):
 
@@ -140,7 +145,7 @@ class QuizMaster:
         self.worker_thread = qi.PeriodicTask()
         self.worker_thread.setCallback(self.run)
         self.worker_thread.setUsPeriod(1000000)
-        self.worker_thread.start(True)
+        #self.worker_thread.start(True)
 
         self.logger.info("QuizMaster worker thread started")
 
