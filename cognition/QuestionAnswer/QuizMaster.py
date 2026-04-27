@@ -73,7 +73,7 @@ class QuizMaster:
 
         try:
             mod = qi.module("qicore")
-            logmanager = app.session.service("LogManager")
+            logmanager = self.app.session.service("LogManager")
             self.provider = mod.createObject("LogProvider", logmanager)
             self.providerId = logmanager.addProvider(self.provider)
         except RuntimeError:
@@ -85,7 +85,7 @@ class QuizMaster:
 
         if (self.providerId != None):
             mod = qi.module("qicore")
-            logmanager = app.session.service("LogManager")
+            logmanager = self.app.session.service("LogManager")
             logmanager.removeProvider(self.providerId)
 
     def set_asr_vocabulary(self, vocabulary):
@@ -121,7 +121,7 @@ class QuizMaster:
     def start_automatic_speech_recognition(self):
 
         try:
-            self.listen = app.session.service("ALSpeechRecognition")
+            self.listen = self.app.session.service("ALSpeechRecognition")
             self.isSrAvailable = True
             self.set_asr_vocabulary(["start game", ])
             self.listen.subscribe("QuizMaster")
