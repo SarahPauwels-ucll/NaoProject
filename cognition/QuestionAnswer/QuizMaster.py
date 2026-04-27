@@ -99,6 +99,17 @@ class QuizMaster:
             self.listen.pause(False)
 
             self.logger.info(vocabulary)
+    
+    def say_phrase(phrase):
+
+        if self.isSrAvailable:
+            self.listen.pause(True)
+
+        self.talk_service.say(phrase)
+
+        if self.isSrAvailable:
+            self.listen.pause(False)
+
 
     def start(self):
 
@@ -233,7 +244,7 @@ class QuizMaster:
         self.answered_right = 0
 
         self.round_number = 1
-        self.talk_service.say("Round {}".format(self.round_number))
+        self.say_phrase("Round {}".format(self.round_number))
 
         self.change_current_state(STATE_CONTINUE_ROUND)
         self.event_queue.put(None)
@@ -246,12 +257,12 @@ class QuizMaster:
 
             # TODO: Increase difficulty level
             self.round_number += 1
-            self.talk_service.say("Round {}".format(self.round_number))
+            self.say_phrase("Round {}".format(self.round_number))
 
             self.change_current_state(STATE_CONTINUE_ROUND)
             self.event_queue.put(None)
         elif isContinue[0] == "no" and isContinue[1] > 0.4:
-            self.talk_service.say("Oh, ok. See you next time!")
+            self.say_phrase("Oh, ok. See you next time!")
             self.set_asr_vocabulary(["start game", ])
             self.change_current_state(STATE_IDLE)
             self.event_queue.put(None)
@@ -265,10 +276,10 @@ class QuizMaster:
 
         if self.questions_asked == self.questions_per_round:
 
-            self.talk_service.say("Round complete, you scored {} out of {}".format(self.answered_right, self.questions_per_round))
+            self.say_phrase("Round complete, you scored {} out of {}".format(self.answered_right, self.questions_per_round))
 
             # TODO: Needs to ask if to play another round, but actually I think we another state.
-            self.talk_service.say("Shall we play again?")
+            self.say_phrase("Shall we play again?")
             self.set_asr_vocabulary(['yes', 'no' ])
             # TODO: We would need a timeout here
 
@@ -277,7 +288,7 @@ class QuizMaster:
             return
 
         self.current_answer = None
-        self.talk_service.say("Next question")
+        self.say_phrase("Next question")
         self.change_current_state(STATE_ASK_QUESTION)
         self.event_queue.put(None)
 
@@ -306,9 +317,9 @@ class QuizMaster:
 
         self.current_question = random.randint(0, 1)
         if self.current_question == 0:
-            self.talk_service.say("What's the name of this tune?")
+            self.say_phrase("What's the name of this tune?")
         else:
-            self.talk_service.say("Who sang this tune?")
+            self.say_phrase("Who sang this tune?")
 
         self.questions_asked += 1
 
@@ -327,7 +338,7 @@ class QuizMaster:
 
         #self.answer_timer = None
         self.physical_feedback.commiserate()
-        self.talk_service.say("Oh no, time's up?")
+        self.say_phrase("Oh no, time's up?")
         self.change_current_state(STATE_CONTINUE_ROUND)
 
         self.event_queue.put(None)
@@ -379,7 +390,7 @@ class QuizMaster:
 
         self.logger.info("Giving encouragement")
 
-        self.talk_service.say("Time's almost up?")
+        self.say_phrase("Time's almost up?")
 
         self.change_current_state(STATE_AWAIT_ANSWER)
 
@@ -389,10 +400,10 @@ class QuizMaster:
 
         if self.game_state == STATE_FEEDBACK_SUCCESS:
             self.physical_feedback.celebrate()
-            self.talk_service.say("Well done, that's right!")
+            self.say_phrase("Well done, that's right!")
         else:
             self.physical_feedback.commiserate()
-            self.talk_service.say("Better luck next time!")
+            self.say_phrase("Better luck next time!")
 
         self.change_current_state(STATE_CONTINUE_ROUND)
         self.event_queue.put(None)
