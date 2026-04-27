@@ -100,7 +100,7 @@ class QuizMaster:
 
             self.logger.info(vocabulary)
     
-    def say_phrase(phrase):
+    def say_phrase(self, phrase):
 
         if self.isSrAvailable:
             self.listen.pause(True)
