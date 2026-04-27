@@ -109,7 +109,18 @@ class QuizMaster:
 
         if self.isSrAvailable:
             self.listen.pause(False)
+    
+    def play_music(self):
 
+        if self.isSrAvailable:
+            self.listen.pause(True)
+
+        title, artist = self.playlist_manager.playTrack()
+
+        if self.isSrAvailable:
+            self.listen.pause(False)
+        
+        return title, artist
 
     def start(self):
 
@@ -296,7 +307,8 @@ class QuizMaster:
 
         self.logger.info("Playing track")
 
-        title, artist = self.playlist_manager.playTrack()
+        title, artist = self.play_music()
+
         if self.current_question == 0:
             self.current_answer = title
         else:
