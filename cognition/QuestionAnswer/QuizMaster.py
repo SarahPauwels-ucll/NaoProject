@@ -6,7 +6,7 @@ import PlaylistManager as pm
 import PhysicalFeedback as pf
 
 ROBOT_IP = "127.0.0.1"
-ROBOT_PORT = "59581"
+ROBOT_PORT = "56279"
 #ROBOT_PORT = "9559"
 
 proxies = [
@@ -124,6 +124,7 @@ class QuizMaster:
             self.listen = app.session.service("ALSpeechRecognition")
             self.isSrAvailable = True
             self.set_asr_vocabulary(["start game", ])
+            self.listen.subscribe("QuizMaster")
         except:
             self.logger.error("Failed to get a handle to ALSpeechRecognition, defaulting to Virtual Robot Test Mode")
             print "Failed to get a handle to ALSpeechRecognition, defaulting to Virtual Robot Test Mode"
@@ -164,6 +165,7 @@ class QuizMaster:
         #    self.memory_subscriber.signal.disconnect(self.on_face_detected)
 
         if self.isSrAvailable:
+            self.listen.unsubscribe("QuizMaster")
             self.talk_service.stop()
         self.talk_service = None
 
